@@ -15,7 +15,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "@vercel/blob": "^2.6.1",
-    "@upstash/redis": "^1.38.0"
+    "@upstash/redis": "^1.38.0",
+    "tokendrift": "*"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
