@@ -4,8 +4,10 @@ This file explains the whole project in plain words. It also lists every
 command you may need, and when to use it.
 
 The other files in this project (`CLAUDE.md`, `docs/tokendrift-prd_1.md`,
-`docs/tokendrift-landing-copy_1.md`) are written for other readers — a
-business plan and marketing copy. This file is written for you.
+`docs/tokendrift-landing-copy_1.md`, `ROADMAP.md`) are written for other
+purposes — build rules, a business plan, marketing copy, and a feature
+checklist. This file is written for you to understand what exists and how
+to use it.
 
 ---
 
@@ -21,7 +23,8 @@ spacing size, someone types `13px`. This is called **drift** — the code
 slowly moves away from the design system.
 
 **TokenDrift is a tool that finds this drift.** You point it at a project's
-code. It reads every CSS and React file. It finds:
+code. It reads every CSS and React file (skipping test files — see below).
+It finds:
 
 1. **Hardcoded colors** — a color typed directly (like `#1D4ED8` or `gray`)
    instead of using a shared token.
@@ -37,11 +40,18 @@ score means there is a lot of drift.
 Finally, it writes all of this into one HTML report file you can open in
 a browser, or upload to get a shareable web link.
 
+**What it deliberately does *not* flag** (learned from scanning real
+open-source projects — see section 6): test files (`*.test.ts`,
+`*.spec.ts`), since they're often full of color literals used as test
+data, not real UI code. Named colors (`red`, `blue`, etc., but not hex
+codes) are also only flagged inside actual style code — a `style={{}}`
+prop or a stylesheet — not inside plain data objects, since English color
+words show up constantly in non-styling data (e.g. `{ label: 'Akron',
+color: 'blue' }` in a dropdown options list).
+
 ---
 
-## 2. The two parts of this project
-
-This project has two separate pieces of software living in one folder.
+## 2. The three parts of this project
 
 ### Part A — The CLI tool (`packages/cli`)
 
@@ -57,25 +67,39 @@ real developers will install and run on their own projects.
 
 ### Part B — The website (`apps/web`)
 
-This is a normal website, built with a framework called **Next.js**. It
-does two jobs:
+A normal website, built with **Next.js**, live at
+`tokendrift-vedantyedes-projects.vercel.app` (a real custom domain isn't
+connected yet). It does several jobs now:
 
-1. Shows a homepage that explains the product (a landing page).
-2. Hosts shared reports. When someone runs the CLI with `--share`, it
-   uploads the report here, and this website shows it at a web address
-   like `usetokendrift.com/r/abc123`.
+1. **Homepage** — explains the product, shows a real sample scan.
+2. **Hosted reports** (`/r/{id}`) — when someone runs the CLI with
+   `--share`, it uploads the report here and shows it at a web address.
+3. **README badges** (`/badge/{slug}.svg`) — a small image showing a
+   repo's latest Drift Score, meant to be pasted into a project's README.
+   It tracks *the repo*, not one single scan: rescanning the same repo
+   updates the same badge instead of creating a new one.
+4. **Email capture** — a "notify me when this score changes" form on
+   hosted report pages, for the future paid-launch list. Nothing
+   automated sends emails yet — it just saves the address.
+5. **Teardown mode** — hosted (and local) reports can be dressed up as a
+   "Published by TokenDrift" editorial write-up, for public content about
+   open-source projects.
+6. **Usage stats** (`/api/stats`) — a simple, no-login page showing how
+   many reports have been shared and viewed in total.
 
-This website needs a place to live online. We chose **Vercel**, a hosting
-company built for this kind of website. It also needs two storage
-services connected to it:
+This website runs on **Vercel**, and needs two storage services connected:
 - **Vercel Blob** — stores the actual report files.
-- **Redis** (via Upstash) — a fast lookup table that remembers which
-  report ID points to which file.
+- **Redis** (via Upstash) — a fast lookup table for reports and badges.
 
-Without those two connected, the website still runs, but it saves files
-to its own hard drive instead — which does not work once it's hosted
-online. That's why both must be set up before the shared-link feature
-works for real users.
+Both are already connected in production (see section 6).
+
+### Part C — Internal scripts (`scripts/`)
+
+Not part of the product — small tools for running the business.
+
+- `scripts/draft-outreach.mjs` — scans a real target repo (a local path,
+  or a public GitHub URL) and drafts a cold-outreach email from the real
+  numbers. See section 4 for usage.
 
 ---
 
@@ -86,14 +110,20 @@ works for real users.
    (`tokendrift.config.js`), to learn the team's real tokens and spacing
    sizes.
 3. It walks through every `.css`, `.scss`, `.tsx`, `.jsx`, `.ts`, and `.js`
-   file, skipping folders like `node_modules` and `dist`.
+   file, skipping folders like `node_modules` and `dist`, and skipping
+   test files.
 4. For each file, it checks every color and spacing value it finds. It
    marks each one as "on token" (good) or "hardcoded" (a problem).
 5. It adds up all the results and calculates the Drift Score.
 6. It writes an HTML report file to your computer.
-7. If you added `--share`, it also removes anything that looks like a
-   secret (like an API key), then uploads just the report data — never
-   your actual source code — to the website, and gives you back a link.
+7. If you added `--share`:
+   - It removes anything that looks like a secret (like an API key).
+   - It works out a stable ID for "this repo" from your git remote, so
+     re-scanning the same repo later updates the same badge instead of
+     making a new one.
+   - It uploads just the report data — never your actual source code —
+     to the website, and gives you back a link, a one-time delete link,
+     and (if a git remote was found) a badge you can paste into a README.
 
 ---
 
@@ -107,7 +137,6 @@ All commands below assume you are inside the project's main folder
 ```
 npm install
 ```
-Downloads everything the project needs to run.
 
 ### Build the CLI tool
 
@@ -124,43 +153,50 @@ inside `packages/cli/src`.
 npm run typecheck --workspace packages/cli
 npm run test --workspace packages/cli
 ```
-The first command checks for type mistakes. The second runs all the
-automated tests. Both should say everything passed before you publish or
-push code.
+Both should say everything passed before you publish or push code.
 
 ### Scan a project with the CLI (the main feature)
 
 ```
 node packages/cli/dist/index.js <folder-to-scan> -o report.html
 ```
-Replace `<folder-to-scan>` with the path to the project you want to
-check. This writes `report.html` — open it in any browser.
 
 Useful extra flags:
 - `--json scan.json` — also saves the raw results as data, not just HTML.
-- `--share` — uploads the report and gives you a web link (requires the
-  website to be deployed and connected to storage — see Part B above).
+- `--share` — uploads the report and gives you a web link, a delete link,
+  and a badge (if a git remote is found).
+- `--share-url <url>` — use a different server than the default (needed
+  right now, since the real domain isn't connected — use
+  `https://tokendrift-vedantyedes-projects.vercel.app`).
+- `--teardown-title "..."` and `--teardown-note "..."` — render the
+  report as a branded "Published by TokenDrift" editorial write-up
+  instead of a plain report.
 
-Once the CLI is published to npm (see below), this becomes simpler:
+Once the CLI is published to npm, this becomes simpler:
 ```
 npx tokendrift <folder-to-scan>
 ```
+
+### Draft a cold-outreach email for a real target
+
+```
+node scripts/draft-outreach.mjs <path-or-github-url> [--name "Their Name"] [--share]
+```
+Scans the target and prints a ready-to-send email with the real score,
+top offenders, and (with `--share`) a real hosted link.
 
 ### Publish the CLI to npm (makes `npx tokendrift` work for everyone)
 
 ```
 npm login
-```
-Do this once, in your own terminal — it opens a login step you must
-complete yourself.
-
-```
 cd packages/cli
 npm publish
 ```
-This makes the tool public and downloadable by anyone in the world. This
-step is **hard to undo** — think of it like hitting "publish" on a blog
-post that strangers immediately start reading.
+`npm login` must be run by you, interactively. Publishing is **hard to
+undo** — once live, anyone can download it. As of this writing, `0.1.0`
+is published; `0.1.1` (with several fixes) is built and ready but not yet
+published — the last publish attempt needs a fresh npm auth token (a
+Granular Access Token with "bypass 2FA" turned on).
 
 ### Run the website on your own computer
 
@@ -168,36 +204,25 @@ post that strangers immediately start reading.
 cd apps/web
 npm run dev
 ```
-Then open `http://localhost:3000` in your browser to see it.
+Then open `http://localhost:3000`.
 
-### Save your code with git (version history)
+### Deploy the website to Vercel
+
+```
+npx vercel --prod
+```
+Run from the **repo root** (not `apps/web`) — the project needs the whole
+monorepo present to resolve the CLI package it depends on. Already
+connected to GitHub, so a normal `git push` to `master` also
+auto-deploys.
+
+### Save and share your code with git
 
 ```
 git add <file names>
 git commit -m "short description of what changed"
+git push
 ```
-This saves a snapshot of your code on your own computer. It does not
-send anything anywhere yet.
-
-### Send your code to GitHub (so others can see it, and so Vercel can
-auto-update the website)
-
-```
-git remote add origin <your GitHub repo URL>
-git push -u origin master
-```
-This uploads your saved snapshots to GitHub. This is **visible to
-others** if the repo is public.
-
-### Put the website online with Vercel
-
-```
-cd apps/web
-npx vercel --prod
-```
-This uploads the website and gives you a live web address. Like
-publishing to npm, this makes something public — other people can visit
-it once deployed.
 
 ---
 
@@ -207,8 +232,11 @@ it once deployed.
 tokendrift/
 ├── CLAUDE.md                    Rules for how this project should be built
 ├── GUIDE.md                     This file — plain explanation for you
+├── ROADMAP.md                   Feature checklist by phase, with current status
+├── vercel.json                  Tells Vercel how to build this monorepo
 ├── docs/                        Business plan and marketing copy
 ├── examples/sample-repo/        A tiny fake project, used to test scans
+├── scripts/                     Internal tools (not part of the product)
 ├── packages/cli/                The scanner tool (Part A)
 │   ├── src/                     Its source code
 │   ├── test/                    Its automated tests
@@ -222,16 +250,25 @@ tokendrift/
 
 ## 6. Where this project stands right now
 
-- The CLI tool works. It has been tested against the sample project and
-  correctly found 13 real problems, giving a Drift Score of 36 out of 100.
-- The CLI has **not** been published to npm yet — `npx tokendrift` will
-  not work until you run `npm login` and `npm publish` yourself.
-- A local git history has been started and one commit has been made. It
-  has **not** been pushed to GitHub yet — that needs a GitHub repo you
-  create, plus a `git push`.
-- The website has been linked to a Vercel project
-  (`vedantyedes-projects/web`), but has **not** been deployed live yet,
-  and the storage services (Blob + Redis) are not connected yet.
+- **The CLI tool works** and has been tested against real open-source
+  projects (not just the sample repo) — Dub, Twenty, and Formbricks.
+  Testing against real code found and fixed four real bugs: a crash on
+  repos with tens of thousands of files, colors wrongly flagged outside
+  real style code, colors wrongly flagged in test files, and (a known,
+  unfixed limit) no way to recognize a company's own bespoke token files.
+- **npm:** `tokendrift@0.1.0` is published — `npx tokendrift` works today.
+  `0.1.1` is built locally with more fixes but not yet published (waiting
+  on a fresh auth token).
+- **GitHub:** pushed, at `github.com/vedantyede/tokendrift`.
+- **Vercel:** deployed and live at
+  `tokendrift-vedantyedes-projects.vercel.app`, connected to GitHub for
+  auto-deploy, with Blob and Redis storage both connected.
+- **Custom domain** (`usetokendrift.com`): not purchased/connected yet —
+  deliberately deferred.
+- **Phase 1 (share MVP) and Phase 2 (badge + capture) are done.** Phase 3
+  (public launch) is in progress: 3 real teardowns are live (see
+  `ROADMAP.md` for links), and basic usage-stat tracking is live. Launch
+  posts (Show HN, r/webdev, dev.to) haven't been written or posted yet.
 
 ---
 
@@ -242,6 +279,8 @@ tokendrift/
 | **Token** | A named, shared design value, like a color or spacing size, meant to be reused everywhere instead of retyped. |
 | **Drift** | Code slowly stopping using the shared tokens, replaced by one-off hardcoded values. |
 | **Drift Score** | A single number, 0–100, showing how much drift a project has. Higher is better. |
+| **Badge** | A small image (like `85/100`) you paste into a README that shows a repo's latest score, and updates automatically when rescanned. |
+| **Teardown** | A branded, public write-up of a scan, meant to be shared as content — different from a private report someone runs on their own code. |
 | **CLI** | A tool you run by typing a command in a terminal, instead of clicking in an app. |
 | **npm** | The official store where JavaScript tools and libraries are published and downloaded. |
 | **npx** | A command that downloads and runs an npm tool for you, without installing it permanently. |
@@ -249,4 +288,5 @@ tokendrift/
 | **git** | Software that saves snapshots ("commits") of your code over time. |
 | **GitHub** | A website that stores your git repo online, so others can see or contribute to it. |
 | **Vercel** | A hosting company. It runs the TokenDrift website and gives it a public web address. |
+| **Redis** | A fast lookup-table database, used here to remember report/badge data. |
 | **CI** (Continuous Integration) | Automated checks that run every time code changes, to catch problems early. |
