@@ -35,6 +35,41 @@ const NAMED_PROPERTY_RE = new RegExp(
   'g',
 );
 
+const STYLESHEET_RE = /\.(css|scss)$/i;
+const STYLE_PROP_RE = /\bstyle\s*=\s*\{\{/g;
+const STYLED_TEMPLATE_RE =
+  /\b(?:styled(?:\([^)]*\))?(?:\.[a-zA-Z0-9_$]+)|css|keyframes|createGlobalStyle)\s*`/g;
+
+// Named colors (`red`, `blue`, `gray`...) are common English words that show
+// up constantly in plain data (status tags, category fields) with no
+// connection to styling — unlike hex/rgb/hsl, which are unambiguous
+// wherever they appear. So for non-stylesheet files, only look for them
+// inside actual style contexts: JSX `style={{...}}` props and
+// styled-components/emotion/Linaria tagged templates.
+function findNamedColorContextRanges(content: string): Array<{ start: number; end: number }> {
+  const ranges: Array<{ start: number; end: number }> = [];
+
+  for (const m of content.matchAll(STYLE_PROP_RE)) {
+    const openStart = m.index! + m[0].length - 1; // the second '{'
+    let depth = 1;
+    let i = openStart + 1;
+    while (i < content.length && depth > 0) {
+      if (content[i] === '{') depth++;
+      else if (content[i] === '}') depth--;
+      i++;
+    }
+    ranges.push({ start: openStart, end: i });
+  }
+
+  for (const m of content.matchAll(STYLED_TEMPLATE_RE)) {
+    const start = m.index! + m[0].length;
+    const end = content.indexOf('`', start);
+    if (end !== -1) ranges.push({ start, end });
+  }
+
+  return ranges;
+}
+
 const VAR_RE = /var\(\s*--[a-zA-Z0-9-_]+[^)]*\)/g;
 const THEME_COLOR_RE = /theme\(\s*['"]?colou?rs?\.[a-zA-Z0-9.\-_]+['"]?\s*\)/gi;
 
@@ -89,14 +124,21 @@ export function detectColors(
     rawMatches.push({ start, end: start + m[0].length, kind, value: m[0], priority: 1 });
   }
 
-  for (const m of content.matchAll(NAMED_PROPERTY_RE)) {
-    const valueText = m[2]!;
-    const valueStart = m.index! + m[0].lastIndexOf(valueText);
-    for (const word of valueText.matchAll(/[A-Za-z]+/g)) {
-      const candidate = word[0].toLowerCase();
-      if (!CSS_NAMED_COLORS.has(candidate)) continue;
-      const start = valueStart + word.index!;
-      rawMatches.push({ start, end: start + word[0].length, kind: 'named', value: word[0], priority: 2 });
+  const namedColorRanges = STYLESHEET_RE.test(relPath)
+    ? [{ start: 0, end: content.length }]
+    : findNamedColorContextRanges(content);
+
+  for (const range of namedColorRanges) {
+    const segment = content.slice(range.start, range.end);
+    for (const m of segment.matchAll(NAMED_PROPERTY_RE)) {
+      const valueText = m[2]!;
+      const valueStart = range.start + m.index! + m[0].lastIndexOf(valueText);
+      for (const word of valueText.matchAll(/[A-Za-z]+/g)) {
+        const candidate = word[0].toLowerCase();
+        if (!CSS_NAMED_COLORS.has(candidate)) continue;
+        const start = valueStart + word.index!;
+        rawMatches.push({ start, end: start + word[0].length, kind: 'named', value: word[0], priority: 2 });
+      }
     }
   }
 

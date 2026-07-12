@@ -41,13 +41,6 @@ const isUrl = /^(https?:\/\/|git@)/.test(target);
 let scanDir = target;
 let cloneDir = null;
 
-if (isUrl) {
-  cloneDir = mkdtempSync(path.join(tmpdir(), 'tokendrift-outreach-'));
-  console.error(`Cloning ${target}...`);
-  execFileSync('git', ['clone', '--depth', '1', target, cloneDir], { stdio: 'inherit' });
-  scanDir = cloneDir;
-}
-
 const jsonOut = path.join(mkdtempSync(path.join(tmpdir(), 'tokendrift-scan-')), 'scan.json');
 const htmlOut = path.join(path.dirname(jsonOut), 'report.html');
 
@@ -57,6 +50,19 @@ const shareArgs = args.share
 
 let shareUrl = null;
 try {
+  if (isUrl) {
+    cloneDir = mkdtempSync(path.join(tmpdir(), 'tokendrift-outreach-'));
+    console.error(`Cloning ${target}...`);
+    // core.longpaths works around Windows' 260-char MAX_PATH default, which
+    // real-world monorepos (deeply nested feature folders) routinely exceed.
+    execFileSync(
+      'git',
+      ['-c', 'core.longpaths=true', 'clone', '--depth', '1', target, cloneDir],
+      { stdio: 'inherit' },
+    );
+    scanDir = cloneDir;
+  }
+
   const output = execFileSync(
     process.execPath,
     [cliBin, scanDir, '--json', jsonOut, '-o', htmlOut, ...shareArgs],

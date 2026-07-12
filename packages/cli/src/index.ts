@@ -35,6 +35,23 @@ function violationFingerprint(v: Violation): string {
   return `${v.rule}|${v.file}|${v.line}|${v.column}|${v.value}`;
 }
 
+// Caps concurrent open file handles. Unbounded Promise.all over every
+// matched file blows past the OS file-descriptor limit on large real-world
+// repos (tens of thousands of files) — EMFILE, especially on Windows.
+const READ_CONCURRENCY = 64;
+
+async function mapWithConcurrency<T>(items: T[], limit: number, fn: (item: T) => Promise<void>): Promise<void> {
+  let next = 0;
+  async function worker(): Promise<void> {
+    for (;;) {
+      const i = next++;
+      if (i >= items.length) return;
+      await fn(items[i]!);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+}
+
 async function scanRepo(rootDir: string): Promise<ScanAggregate> {
   const config = await loadConfig(rootDir);
   const files = await walk(rootDir, config);
@@ -42,19 +59,17 @@ async function scanRepo(rootDir: string): Promise<ScanAggregate> {
   let linesScanned = 0;
   const fileResults: FileScanResult[] = [];
 
-  await Promise.all(
-    files.map(async (f) => {
-      const content = await readFile(f.absPath, 'utf8');
-      const colors = detectColors(f.relPath, content, config);
-      const spacing = detectSpacing(f.relPath, content, config);
-      fileResults.push({
-        file: f.relPath,
-        violations: [...colors.violations, ...spacing.violations],
-        tokenReferences: [...colors.tokenReferences, ...spacing.tokenReferences],
-      });
-      linesScanned += content.length === 0 ? 0 : content.split('\n').length;
-    }),
-  );
+  await mapWithConcurrency(files, READ_CONCURRENCY, async (f) => {
+    const content = await readFile(f.absPath, 'utf8');
+    const colors = detectColors(f.relPath, content, config);
+    const spacing = detectSpacing(f.relPath, content, config);
+    fileResults.push({
+      file: f.relPath,
+      violations: [...colors.violations, ...spacing.violations],
+      tokenReferences: [...colors.tokenReferences, ...spacing.tokenReferences],
+    });
+    linesScanned += content.length === 0 ? 0 : content.split('\n').length;
+  });
 
   fileResults.sort((a, b) => (a.file < b.file ? -1 : a.file > b.file ? 1 : 0));
   for (const fr of fileResults) {

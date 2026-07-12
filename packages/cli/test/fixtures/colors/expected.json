@@ -108,5 +108,40 @@
         "value": "bg-blue-500"
       }
     ]
+  },
+  "data-and-style.tsx": {
+    "violations": [
+      {
+        "rule": "hardcoded-color",
+        "category": "color",
+        "kind": "hex",
+        "file": "data-and-style.tsx",
+        "line": 6,
+        "column": 27,
+        "value": "#3B82F6",
+        "snippet": "export const BRAND_HEX = '#3B82F6';"
+      },
+      {
+        "rule": "hardcoded-color",
+        "category": "color",
+        "kind": "named",
+        "file": "data-and-style.tsx",
+        "line": 9,
+        "column": 33,
+        "value": "green",
+        "snippet": "return <span style={{ color: 'green', backgroundColor: '#FFEE00' }}>Live</span>;"
+      },
+      {
+        "rule": "hardcoded-color",
+        "category": "color",
+        "kind": "hex",
+        "file": "data-and-style.tsx",
+        "line": 9,
+        "column": 59,
+        "value": "#FFEE00",
+        "snippet": "return <span style={{ color: 'green', backgroundColor: '#FFEE00' }}>Live</span>;"
+      }
+    ],
+    "tokenReferences": []
   }
 }
