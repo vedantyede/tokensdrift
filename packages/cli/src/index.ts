@@ -10,7 +10,7 @@ import { renderReport } from './report.js';
 import { buildSharePayload, uploadReport, DEFAULT_SHARE_URL } from './share.js';
 import type { FileScanResult, ScanAggregate, Violation } from './types.js';
 
-const TOOL_VERSION = '0.1.0';
+const TOOL_VERSION = '0.1.1';
 
 const USAGE = `tokendrift [dir] [options]
 
