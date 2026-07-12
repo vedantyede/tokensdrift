@@ -21,6 +21,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     rootDir: report.meta.label,
     generatedAt: report.meta.generatedAt,
     toolVersion: report.meta.toolVersion,
+    reportId: id,
   });
 
   return new Response(html, {

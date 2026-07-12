@@ -48,8 +48,14 @@ Makes the free tool self-promoting before any paid feature exists.
       `--share` upserts that repo's badge pointer. `--share` now prints
       ready-to-paste badge markdown when a git remote is found. Unregistered
       slugs render a neutral "no data" badge (200, not a broken-image icon).
-- [ ] Optional email capture on hosted report pages ("email me when this
-      score changes") — feeds the future paid-launch list
+- [x] Optional email capture on hosted report pages ("email me when this
+      score changes"). Lives only on the hosted page, never the local file —
+      `renderReport()` takes an optional `reportId`; the form, its script,
+      and even its CSS are entirely inside that conditional, so a locally
+      generated report can't ship a non-functional form pointing at nothing.
+      Captures land in a simple append-only list (`email-captures` in Redis)
+      for the future paid-launch outreach (PRD F11) — no automated emails
+      sent yet, just the capture.
 - [ ] "Published by TokenDrift" mode for public teardowns of open-source
       repos (content marketing using the product itself)
 
