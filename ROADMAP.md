@@ -69,13 +69,35 @@ Makes the free tool self-promoting before any paid feature exists.
 
 ---
 
-## Phase 3 — Public launch — Not started
+## Phase 3 — Public launch — In progress
 
-- [ ] Launch posts: Show HN, r/webdev, dev.to
-- [ ] 2–3 open-source teardowns published using the badge/teardown mode above
+- [ ] Launch posts: Show HN, r/webdev, dev.to. **Deliberately not done by
+      me** — posting under your identity/reputation on a third-party
+      platform is your call, not something to automate. Ask if you want
+      draft copy for any of these.
+- [x] 2–3 open-source teardowns published using the badge/teardown mode above.
+      Three live, real, independently-verified:
+      - [Dub — 82/100, 93% adoption](https://tokendrift-vedantyedes-projects.vercel.app/r/9GNaJ2M_jc81GDZ_9B9Z5Q)
+      - [Twenty — 77/100, 80% adoption](https://tokendrift-vedantyedes-projects.vercel.app/r/60K5vksSV58e7yNR4oRh1w)
+      - [Formbricks — 87/100, 96% adoption](https://tokendrift-vedantyedes-projects.vercel.app/r/JuKMkzk5IYM2dc7R19DsMQ)
+
+      Producing these surfaced and fixed two more real scanner bugs (in
+      addition to the two from the outreach-drafting work): named colors
+      inside bespoke non-CSS palette/theme files and raw HTML email
+      templates read as "violations" when they're not (documented as a
+      known v1 scope limit, not fixed — no generic way to recognize
+      arbitrary token-source formats), and test files full of intentional
+      color literals as fixtures (fixed — test files now excluded by
+      default). Every number cited was independently checked against the
+      actual file content before publishing, not just taken from the raw
+      scan output.
 - [ ] Track shares-per-scan; if it falls below 0.15, pause new features and
       fix report persuasiveness first (this is a hard guardrail from the PRD,
-      not a suggestion)
+      not a suggestion). **Not yet trackable at all** — local scans are
+      never reported to the server by design (the privacy promise), so
+      there's currently no denominator for this ratio. Needs a lightweight,
+      privacy-preserving proxy (e.g. hosted-report view counts) before this
+      guardrail can be measured.
 
 **Exit target:** 500 cumulative scans.
 
