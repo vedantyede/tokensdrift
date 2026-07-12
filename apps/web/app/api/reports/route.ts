@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStore, REPORT_TTL_SECONDS } from '@/lib/store';
 import { getBadgeStore } from '@/lib/badgeStore';
+import { getStatsStore } from '@/lib/statsStore';
 import { generateId, generateDeletionToken, hashToken } from '@/lib/id';
 import { validateSharePayload, MAX_PAYLOAD_BYTES } from '@/lib/validate';
 
@@ -38,6 +39,9 @@ export async function POST(req: NextRequest) {
     },
     REPORT_TTL_SECONDS,
   );
+
+  const statsStore = await getStatsStore();
+  await statsStore.incrementReportsCreated();
 
   let badgeUrl: string | undefined;
   if (payload.meta.repoSlug) {

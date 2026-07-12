@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { renderReport } from 'tokendrift/report';
 import { getStore } from '@/lib/store';
+import { getStatsStore } from '@/lib/statsStore';
 
 // A route handler (not a page component) so the hosted report is served as
 // the exact same static HTML string the CLI writes locally — one renderer,
@@ -16,6 +17,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       headers: { 'content-type': 'text/plain; charset=utf-8' },
     });
   }
+
+  const statsStore = await getStatsStore();
+  await statsStore.incrementView(id);
 
   const html = renderReport(report.aggregate, {
     rootDir: report.meta.label,

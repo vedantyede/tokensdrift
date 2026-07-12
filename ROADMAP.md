@@ -91,13 +91,19 @@ Makes the free tool self-promoting before any paid feature exists.
       default). Every number cited was independently checked against the
       actual file content before publishing, not just taken from the raw
       scan output.
-- [ ] Track shares-per-scan; if it falls below 0.15, pause new features and
-      fix report persuasiveness first (this is a hard guardrail from the PRD,
-      not a suggestion). **Not yet trackable at all** — local scans are
-      never reported to the server by design (the privacy promise), so
-      there's currently no denominator for this ratio. Needs a lightweight,
-      privacy-preserving proxy (e.g. hosted-report view counts) before this
-      guardrail can be measured.
+- [x] Track shares-per-scan — as an honest proxy, not the literal PRD metric.
+      True total scans can't be counted without breaking the "your code
+      never leaves your machine" promise (local scans are never reported at
+      all), so there's no real denominator for "shares per scan." What's
+      actually measurable: `GET /api/stats` returns `reportsCreated`,
+      `totalViews`, and `viewsPerReport` (hosted-report views ÷ reports
+      shared) — unauthenticated, since it's aggregate counts only, no
+      per-user data. Verified live: shared a report, viewed it 3 times, a
+      404 to a nonexistent report correctly didn't count, `viewsPerReport`
+      came back as exactly 3. **The 0.15 guardrail itself doesn't map
+      cleanly onto this proxy** — `viewsPerReport` measures something
+      related but not identical to the PRD's "opened by ≥1 non-creator"
+      definition. Worth revisiting once there's real traffic to look at.
 
 **Exit target:** 500 cumulative scans.
 
