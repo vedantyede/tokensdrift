@@ -109,8 +109,8 @@ export function renderReport(aggregate: ScanAggregate, meta: ReportMeta): string
   table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
   th, td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid #eee; }
   th { color: #666; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
-  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; }
-  .snippet { max-width: 420px; overflow-x: auto; white-space: pre; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; overflow-wrap: anywhere; word-break: break-word; }
+  .snippet { max-width: 420px; overflow-x: auto; white-space: pre; overflow-wrap: normal; word-break: normal; }
   .breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
   .metric { font-size: 1.5rem; font-weight: 600; }
   footer { text-align: center; font-size: 0.8rem; margin-top: 2rem; }
