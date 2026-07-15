@@ -62,11 +62,76 @@ export async function fetchFileContent(
   return Buffer.from(data.content, 'base64').toString('utf8');
 }
 
+const DRIFT_COMMENT_MARKER = '<!-- tokensdrift:drift-comment -->';
+
+interface IssueComment {
+  id: number;
+  body: string;
+}
+
+/**
+ * Creates the PR's drift-delta comment on first run, then edits that same
+ * comment on every later push — one persistent comment per PR, not a new
+ * one each time. Comments are tagged with a hidden marker so this can find
+ * its own comment across runs without needing to store the comment id
+ * anywhere.
+ */
+export async function upsertPrComment(
+  token: string,
+  owner: string,
+  repo: string,
+  prNumber: number,
+  body: string,
+): Promise<void> {
+  const taggedBody = `${DRIFT_COMMENT_MARKER}\n${body}`;
+
+  let existingId: number | null = null;
+  let page = 1;
+  for (;;) {
+    const res = await githubFetch(
+      token,
+      `https://api.github.com/repos/${owner}/${repo}/issues/${prNumber}/comments?per_page=100&page=${page}`,
+    );
+    if (!res.ok) throw new Error(`listPrComments failed: ${res.status} ${await res.text()}`);
+    const batch = (await res.json()) as IssueComment[];
+    const found = batch.find((c) => c.body.startsWith(DRIFT_COMMENT_MARKER));
+    if (found) {
+      existingId = found.id;
+      break;
+    }
+    if (batch.length < 100) break;
+    page++;
+  }
+
+  if (existingId) {
+    const res = await githubFetch(token, `https://api.github.com/repos/${owner}/${repo}/issues/comments/${existingId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ body: taggedBody }),
+    });
+    if (!res.ok) throw new Error(`updatePrComment failed: ${res.status} ${await res.text()}`);
+    return;
+  }
+
+  const res = await githubFetch(token, `https://api.github.com/repos/${owner}/${repo}/issues/${prNumber}/comments`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ body: taggedBody }),
+  });
+  if (!res.ok) throw new Error(`createPrComment failed: ${res.status} ${await res.text()}`);
+}
+
 export async function createCheckRun(
   token: string,
   owner: string,
   repo: string,
-  params: { name: string; headSha: string; conclusion: 'success' | 'failure'; title: string; summary: string },
+  params: {
+    name: string;
+    headSha: string;
+    conclusion: 'success' | 'failure' | 'neutral';
+    title: string;
+    summary: string;
+  },
 ): Promise<void> {
   const res = await githubFetch(token, `https://api.github.com/repos/${owner}/${repo}/check-runs`, {
     method: 'POST',

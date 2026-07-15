@@ -1,5 +1,6 @@
 import { getInstallationToken } from './githubAuth';
-import { listPrFiles, fetchFileContent, createCheckRun } from './githubApi';
+import { listPrFiles, fetchFileContent, createCheckRun, upsertPrComment } from './githubApi';
+import { getEntitlement } from './entitlement';
 import { detectColors, detectSpacing, DEFAULT_CONFIG, violationFingerprint } from 'tokensdrift/scan';
 import type { Violation } from 'tokensdrift/types';
 
@@ -31,6 +32,21 @@ export async function runPrCheck(payload: PullRequestPayload): Promise<void> {
   const baseSha = payload.pull_request.base.sha;
 
   const token = await getInstallationToken(payload.installation.id);
+
+  const entitlement = await getEntitlement(payload.installation.id);
+  if (!entitlement.entitled) {
+    await createCheckRun(token, owner, repo, {
+      name: 'TokensDrift',
+      headSha,
+      conclusion: 'neutral',
+      title: 'Trial expired — upgrade to keep drift checks running',
+      summary:
+        'Your TokensDrift trial has ended and no active subscription was found for this ' +
+        'installation. Visit https://tokensdrift.com/billing to upgrade and resume PR checks.',
+    });
+    return;
+  }
+
   const files = (await listPrFiles(token, owner, repo, prNumber)).slice(0, MAX_FILES);
 
   const headViolations: Violation[] = [];
@@ -76,4 +92,34 @@ export async function runPrCheck(payload: PullRequestPayload): Promise<void> {
     title,
     summary: summaryLines.join('\n'),
   });
+
+  await upsertPrComment(token, owner, repo, prNumber, driftCommentBody(newViolations, files.length));
+}
+
+// The retention feature (ROADMAP.md Phase 4 item 2): the check run blocks a
+// merge once, but this comment is what actually gets read on every push —
+// so it's rebuilt and edited in place each run, not just posted once.
+function driftCommentBody(newViolations: Violation[], filesScanned: number): string {
+  const lines = ['## TokensDrift', ''];
+
+  if (newViolations.length === 0) {
+    lines.push('No new drift introduced by this PR.');
+  } else {
+    lines.push(
+      `**${newViolations.length} new drift violation${newViolations.length === 1 ? '' : 's'}** ` +
+        'introduced by this PR — existing debt in these files does not block.',
+      '',
+      '| File | Line | Kind | Value |',
+      '| --- | --- | --- | --- |',
+    );
+    for (const v of newViolations.slice(0, 50)) {
+      lines.push(`| \`${v.file}\` | ${v.line} | ${v.kind} | \`${v.value}\` |`);
+    }
+    if (newViolations.length > 50) {
+      lines.push('', `_...and ${newViolations.length - 50} more_`);
+    }
+  }
+
+  lines.push('', `<sub>Scanned ${filesScanned} changed file(s). Updates automatically on every push.</sub>`);
+  return lines.join('\n');
 }

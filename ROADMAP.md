@@ -133,22 +133,39 @@ captures true total scans.
 scans — not yet hit, since launch posts haven't been published). This was
 an explicit decision, not an oversight — see `CLAUDE.md` for the current
 phase note. Full user accounts are still not automatically in scope; see
-`CLAUDE.md`'s "Out of scope" section for the identity-model caveat.
+`CLAUDE.md`'s "Out of scope" section.
 
 Order matters here too — ship in this sequence, not the order the features
 were originally listed in:
 
-1. [ ] **Stripe billing first.** Pro $29/mo/repo, Team $79/mo up to 10
-       repos. You can't convert a trial without a way to pay, but you *can*
-       convert one without a dashboard — billing unblocks revenue sooner
-       than the other three items. Includes checkout, the customer portal,
-       and plan gating on the GitHub App.
-2. [ ] **Drift-delta PR comments second** (one comment per PR, updated in
+1. [ ] **Paddle billing first** (switched from the originally-planned
+       Stripe — sandbox keys configured, nothing about the pivot is
+       recorded elsewhere, so noting it here). Pro $29/mo/repo, Team
+       $79/mo up to 10 repos. You can't convert a trial without a way to
+       pay, but you *can* convert one without a dashboard — billing
+       unblocks revenue sooner than the other three items. Checkout
+       (`/api/checkout`), the customer portal (`/api/billing-portal`), the
+       webhook (`/api/paddle/webhook`), and plan gating on the GitHub App's
+       PR check (`entitlement.ts`, 14-day trial then gated) are all built
+       against Paddle sandbox, and the dashboard now has real Upgrade
+       buttons wired to `/api/checkout` (see item 3). Not yet done: an
+       actual sandbox purchase hasn't been run through the full
+       checkout → webhook → `billingStore` path since the dashboard buttons
+       replaced the old throwaway test page — do that before trusting this
+       as verified.
+2. [x] **Drift-delta PR comments second** (one comment per PR, updated in
        place) — the retention feature. The check run blocks a merge once;
-       the PR comment is what gets read on every PR, daily.
+       the PR comment is what gets read on every PR, daily. Built
+       (`upsertPrComment` in `githubApi.ts`, wired into `runPrCheck`): finds
+       its own comment via a hidden marker rather than storing an id, so it
+       edits in place across every push instead of piling up duplicates.
+       Unit-tested for the clean/violation/repeat-run cases.
 3. [ ] **Minimal dashboard third** — repo list, score trend chart, latest
        report link, billing portal link. Four things; resist adding a
-       fifth before these four are solid.
+       fifth before these four are solid. GitHub OAuth sign-in, repo list,
+       latest score, billing-portal link, and Upgrade/checkout buttons
+       (gated to plans above the current one) are built and live at
+       `/dashboard`. Still missing: the score trend chart.
 4. [ ] **Slack weekly digest + regression alerts last** — needs teams with
        real repos connected to exist first, or there's nothing to digest.
 5. [x] GitHub App (`tokensdrift`, least-privilege: checks/PRs write,
@@ -243,7 +260,7 @@ after 25 paying teams, per the PRD:
 
 ## Open questions that block later phases
 
-Carried over from the PRD — decide these before Stripe billing goes live
+Carried over from the PRD — decide these before Paddle billing goes live
 (Phase 4, item 1), since pricing/expiry choices are far harder to change
 once real customers are paying under them:
 
