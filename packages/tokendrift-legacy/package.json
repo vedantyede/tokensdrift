@@ -1,0 +1,16 @@
+{
+  "name": "tokendrift",
+  "version": "0.1.2",
+  "description": "Renamed to tokensdrift. This package forwards every command to it so existing scripts and CI keep working.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "tokendrift": "index.js"
+  },
+  "files": [
+    "index.js"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

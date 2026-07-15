@@ -316,9 +316,12 @@ tokensdrift/
   Production build — worth checking the Production Branch setting in
   Vercel's dashboard. Deploys have been done manually (`vercel --prod`) in
   the meantime.
-- **Custom domain** (`tokensdrift.com`): being purchased directly by you
-  (Vercel blocks agents from buying domains — needs interactive
-  confirmation of price/registrant details). Not connected yet.
+- **Custom domain** (`tokensdrift.com`): bought and live. DNS points at
+  Vercel's edge via an A record (through the registrar, not Vercel-managed
+  nameservers — a fully valid setup). The apex domain redirects (308) to
+  `www.tokensdrift.com`, which serves the real site. Verified live end to
+  end: a full `--share` run against the default URL correctly followed the
+  redirect, uploaded, and the hosted report loaded.
 - **GitHub App**: renamed to `tokensdrift` (`github.com/apps/tokensdrift`),
   `GITHUB_APP_SLUG` updated to match and redeployed — verified live
   (`/install` redirects to the new slug's install page, which resolves).

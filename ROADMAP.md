@@ -29,13 +29,12 @@ The core loop works end to end, live in production:
       `CRON_SECRET`) deletes the underlying blob once it's past the same TTL,
       so expired reports don't linger as orphaned public URLs forever
 
-**Not yet done from Phase 1:**
-- [ ] Custom domain (`tokensdrift.com`) — deliberately deferred (not
-      purchased/connected yet). The CLI's default `--share` target still
-      points at this domain, so until it's connected, `--share` needs
-      `--share-url` pointed at the current `.vercel.app` URL. **Promoted to
-      the first task of Phase 3** (see below) — do it before any launch
-      post, not after.
+- [x] Custom domain (`tokensdrift.com`) — bought and connected. DNS points
+      at Vercel's edge via an A record through the registrar (no nameserver
+      change needed). Verified live: a real `--share` run against the
+      default URL followed the apex→`www` redirect correctly and uploaded
+      successfully. The CLI's `DEFAULT_SHARE_URL` now points here, so
+      `--share-url` is no longer needed for normal use.
 
 ---
 
@@ -75,9 +74,10 @@ Makes the free tool self-promoting before any paid feature exists.
 
 Order matters here, not just the list of tasks:
 
-1. [ ] **Connect `tokensdrift.com` first** — before any launch post.
+1. [x] **Connect `tokensdrift.com` first** — before any launch post.
        Links posted publicly are permanent; a `.vercel.app` URL in a Show HN
        post reads as abandoned a year later in a way a real domain doesn't.
+       Done and verified live.
 2. [ ] **Launch posts, one per week — not all at once:** Show HN, then
        r/webdev (in the Showoff Saturday megathread — see
        `docs/launch-posts.md`), then dev.to. Three separate traffic spikes

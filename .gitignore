@@ -8,4 +8,4 @@ apps/web/.data/
 .vercel
 
 .env*
-packages/cli/*-report.html
+*-report.html
