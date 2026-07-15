@@ -10,9 +10,29 @@ const findings = [
   { color: 'transparent', loc: 'styles.css:24', before: 'padding: 10px 17px', after: 'var(--space-4) · 16px' },
 ];
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'TokensDrift',
+  url: 'https://tokensdrift.com',
+  applicationCategory: 'DeveloperApplication',
+  operatingSystem: 'Node.js >= 18',
+  description:
+    'Scan your codebase for hardcoded colors, off-scale spacing, and low design token adoption. Zero-dependency CLI, runs locally, shareable Drift Score.',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+};
+
 export default function Home() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className={styles.header}>
         <div className={styles.wordmark}>
           tokens<span>drift</span>

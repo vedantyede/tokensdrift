@@ -1,4 +1,9 @@
+import type { Metadata } from 'next';
 import { DeleteButton } from './delete-button';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function DeleteReportPage({
   params,

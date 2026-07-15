@@ -32,6 +32,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   return new Response(html, {
     status: 200,
-    headers: { 'content-type': 'text/html; charset=utf-8' },
+    // Reports expire after 90 days and aren't curated marketing content —
+    // shouldn't end up in search results even if linked externally.
+    headers: { 'content-type': 'text/html; charset=utf-8', 'x-robots-tag': 'noindex' },
   });
 }
