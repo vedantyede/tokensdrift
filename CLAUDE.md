@@ -2,7 +2,7 @@
 
 CLI tool that scans codebases for design system drift (hardcoded colors, off-scale spacing, low token adoption) and generates a scored, shareable HTML report. Domain: tokensdrift.com. npm: `tokensdrift`.
 
-Full spec lives in `docs/tokensdrift-prd.md` — read it before making product decisions.
+Full spec lives in `docs/tokensdrift-prd_1.md` — read it before making product decisions.
 
 ## Current phase
 

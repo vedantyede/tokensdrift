@@ -160,12 +160,15 @@ were originally listed in:
        its own comment via a hidden marker rather than storing an id, so it
        edits in place across every push instead of piling up duplicates.
        Unit-tested for the clean/violation/repeat-run cases.
-3. [ ] **Minimal dashboard third** — repo list, score trend chart, latest
+3. [x] **Minimal dashboard third** — repo list, score trend chart, latest
        report link, billing portal link. Four things; resist adding a
        fifth before these four are solid. GitHub OAuth sign-in, repo list,
-       latest score, billing-portal link, and Upgrade/checkout buttons
-       (gated to plans above the current one) are built and live at
-       `/dashboard`. Still missing: the score trend chart.
+       latest score, billing-portal link, Upgrade/checkout buttons (gated
+       to plans above the current one), and the score trend chart are all
+       built and live at `/dashboard`. The trend chart is a sparkline
+       (`dashboard/score-sparkline.tsx`) backed by a new per-repo score
+       history store (`scoreHistoryStore`, same fs/Redis dual-backend
+       pattern as `badgeStore`) written alongside every `--share` upload.
 4. [ ] **Slack weekly digest + regression alerts last** — needs teams with
        real repos connected to exist first, or there's nothing to digest.
 5. [x] GitHub App (`tokensdrift`, least-privilege: checks/PRs write,

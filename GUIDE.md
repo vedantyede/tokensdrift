@@ -67,9 +67,9 @@ real developers will install and run on their own projects.
 
 ### Part B — The website (`apps/web`)
 
-A normal website, built with **Next.js**, live at
-`tokensdrift-vedantyedes-projects.vercel.app` (a real custom domain isn't
-connected yet). It does several jobs now:
+A normal website, built with **Next.js**, live at **tokensdrift.com** (the
+old `tokensdrift-vedantyedes-projects.vercel.app` Vercel URL still resolves
+too). It does several jobs now:
 
 1. **Homepage** — explains the product, shows a real sample scan.
 2. **Hosted reports** (`/r/{id}`) — when someone runs the CLI with
@@ -201,9 +201,9 @@ Useful extra flags:
 - `--json scan.json` — also saves the raw results as data, not just HTML.
 - `--share` — uploads the report and gives you a web link, a delete link,
   and a badge (if a git remote is found).
-- `--share-url <url>` — use a different server than the default (needed
-  right now, since the real domain isn't connected — use
-  `https://tokensdrift-vedantyedes-projects.vercel.app`).
+- `--share-url <url>` — use a different server than the default. No longer
+  needed for normal use now that the default points at `tokensdrift.com`;
+  only useful for testing against a different deployment.
 - `--teardown-title "..."` and `--teardown-note "..."` — render the
   report as a branded "Published by TokensDrift" editorial write-up
   instead of a plain report.
@@ -331,11 +331,17 @@ tokensdrift/
 - **Phase 1 (share MVP) and Phase 2 (badge + capture) are done.** Phase 3
   (public launch) is in progress: 3 real teardowns are live (see
   `ROADMAP.md` for links), and basic usage-stat tracking is live. Launch
-  posts (Show HN, r/webdev, dev.to) haven't been written or posted yet.
+  posts (Show HN, r/webdev, dev.to) haven't been written or posted yet, so
+  the 500-cumulative-scan exit target hasn't been hit.
   **Phase 4 (paid product) was started deliberately ahead of Phase 3's
-  finish line** — see `CLAUDE.md`'s phase note for why. GitHub App and
-  the PR check are done; drift-delta PR comments, a dashboard, Slack
-  digests, and billing are not built yet.
+  finish line** — see `CLAUDE.md`'s phase note for why. Done: the GitHub
+  App, the PR ratchet check, drift-delta PR comments (one comment per PR,
+  edited in place on every push), and a dashboard at `/dashboard`
+  (GitHub OAuth sign-in, repo list, latest score, a score trend
+  sparkline, and a billing-portal link). Paddle billing (checkout, portal,
+  webhook, plan gating) is built against Paddle's sandbox but not yet
+  verified end to end with a real sandbox purchase. Slack weekly digests
+  are not built yet — see `ROADMAP.md` for the full per-feature list.
 
 ---
 
